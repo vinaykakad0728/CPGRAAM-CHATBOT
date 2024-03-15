@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPGRAM Grievance Redressal Chatbot</title>
+<style>
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #e5ddd5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+  #startChatBtn { border: none; background-color: #09d261; color: white; padding: 15px; border-radius: 50%; font-size: 16px; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+  .chat-container { width: 350px; background-color: white; border-radius: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); display: none; }
+  .chat-box { padding: 10px; overflow: auto; max-height: 500px; background-color: #fff; }
+  .chat-message { padding: 8px 10px; margin: 5px; border-radius: 7.5px; max-width: 80%; display: inline-block; clear: both; }
+  .user-message { background-color: #dcf8c6; margin-left: auto; text-align: right; }
+  .bot-message { background-color: #ebebeb; margin-right: auto; text-align: left; }
+  select, input { width: calc(100% - 20px); padding: 10px; margin: 5px auto; display: block; box-sizing: border-box; border-radius: 15px; border: 1px solid #ddd; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<button id="startChatBtn" onclick="startChat()">Start Chat</button>
+
+<div class="chat-container" id="chatContainer">
+  <div id="chat" class="chat-box"></div>
+  <input type="text" id="userInput" class="chat-input hidden" placeholder="Type here..." onkeydown="if (event.keyCode == 13) { processInput(); }">
+</div>
+
+
+
+
+
+
+<script>
+  var ministries = {
+    'Ministry of Home Affairs': {
+      'Department of Internal Security': ['Terrorism threats', 'Cybersecurity challenges', 'Communal tensions'],
+      'Department of Border Management': ['Cross-border infiltration', 'Border disputes'],
+      'Department of States': ['Inter-state disputes', 'Coordination among states'],
+      'Department of Home': ['Internal security challenges', 'Law and order issues'],
+      'Department of Official Language': ['Implementation of language policies', 'Promotion of Hindi'],
+      'Department of Jammu & Kashmir Affairs': ['Handling security challenges', 'Development initiatives'],
+      'Department of Home Guards': ['Training home guards', 'Maintaining law and order'],
+      'Department of National Disaster Management': ['Preparedness for natural disasters', 'Disaster management efforts']
+    },
+    'Ministry of Finance': {
+      'Department of Economic Affairs': ['Fiscal deficit management', 'Monetary policy formulation'],
+      'Department of Revenue': ['Tax evasion', 'Streamlining tax administration'],
+      'Department of Expenditure': ['Rationalizing government expenditure', 'Improving budget allocation'],
+      'Department of Financial Services': ['Banking sector reforms', 'Financial inclusion']
+    },
+    'Ministry of Transport': {
+      'Department of Road Transport and Highways': ['Road accidents and fatalities', 'Congestion on highways'],
+      'Department of Shipping': ['Port modernization', 'Maritime safety and security'],
+      'Department of Civil Aviation': ['Aviation safety and regulation', 'Airspace management']
+    }
+  };
+  
+  
+  
+  
+   
+
+    async function storeUserData() {
+  const ministry = document.getElementById('ministrySelect').value;
+  const department = document.getElementById('departmentSelect').value;
+  const problem = document.getElementById('problemSelect').value;
+  const name = document.getElementById('name').value;
+  const phone = document.getElementById('phone').value;
+  const email = document.getElementById('email').value;
+
+  const userData = { ministry, department, problem, name, phone, email };
+
+  try {
+    const response = await fetch('http://localhost:3000/storeUserData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
+
+    if (response.ok) {
+      console.log('User data stored successfully');
+      // Optionally, you can show a success message to the user
+    } else {
+      console.error('Failed to store user data');
+      // Optionally, you can show an error message to the user
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+        
+        
+        
+        
+
+  function startChat() {
+    document.getElementById('startChatBtn').remove();
+    var chatContainer = document.getElementById('chatContainer');
+    chatContainer.style.display = 'block';
+    addBotMessage('Namastey 😀');
+    addBotMessage('Welcome to CPGRAM portal. How can I assist you?');
+    setTimeout(function() { selectMinistry(); }, 1000);
+  }
+
+  function addBotMessage(message) {
+    var chat = document.getElementById('chat');
+    var messageDiv = document.createElement('div');
+    messageDiv.classList.add('chat-message', 'bot-message');
+    messageDiv.innerHTML = message;
+    chat.appendChild(messageDiv);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function selectMinistry() {
+    addBotMessage('Select relevant ministry:');
+    var select = document.createElement('select');
+    select.id = 'ministrySelect';
+    select.onchange = function() { listDepartments(this.value); };
+    var defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.text = 'Choose Ministry';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    select.appendChild(defaultOption);
+    for (var ministry in ministries) {
+      var option = document.createElement('option');
+      option.value = ministry;
+      option.text = ministry;
+      select.appendChild(option);
+    }
+    document.getElementById('chat').appendChild(select);
+  }
+  
+  
+  
+
+  function listDepartments(ministry) {
+    if (!ministry) return;
+    addBotMessage('Select department in ' + ministry + ':');
+    var select = document.createElement('select');
+    select.id = 'departmentSelect';
+    select.onchange = function() { listProblems(ministry, this.value); };
+    var defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.text = 'Choose Department';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    select.appendChild(defaultOption);
+    for (var department in ministries[ministry]) {
+      var option = document.createElement('option');
+      option.value = department;
+      option.text = department;
+      select.appendChild(option);
+    }
+    document.getElementById('chat').appendChild(select);
+  }
+
+
+
+
+   
+     function listProblems(ministry, department) {
+    if (!department) return;
+    addBotMessage('Commonly faced problems in ' + department + ':');
+    var select = document.createElement('select');
+    select.id = 'problemSelect';
+    select.onchange = function() { 
+        var problem = this.value;
+        if (problem === 'more') {
+            // Remove the problem selection dropdown
+            this.remove();
+            // Prompt the user to type their problem
+            addBotMessage('Please type your problem:');
+            // Show the user input field
+            document.getElementById('userInput').classList.remove('hidden');
+            document.getElementById('userInput').focus();
+            document.getElementById('userInput').onkeydown = function(event) {
+                if (event.keyCode == 13) {
+                    // Process the user's input
+                    processUserProblem();
+                }
+            };
+            // Hide the personal details input fields if they are present
+            hidePersonalDetailsInputFields();
+            // Hide the submit button if it is present
+            hideSubmitButton();
+        } else {
+            // Other problem selected, proceed as usual
+            registerIssue();
+            requestUserDetails();
+        }
+    };
+    var defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.text = 'Choose Problem';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    select.appendChild(defaultOption);
+    ministries[ministry][department].forEach(function(problem) {
+        var option = document.createElement('option');
+        option.value = problem;
+        option.text = problem;
+        select.appendChild(option);
+    });
+    // Add 'more' option
+    var moreOption = document.createElement('option');
+    moreOption.value = 'more';
+    moreOption.text = 'More';
+    select.appendChild(moreOption);
+    document.getElementById('chat').appendChild(select);
+}
+
+function processUserProblem() {
+    var userProblem = document.getElementById('userInput').value;
+    addBotMessage('Your typed problem: ' + userProblem);
+    document.getElementById('userInput').classList.add('hidden');
+    registerIssue();
+    requestUserDetails();
+}
+  
+  
+  
+  
+
+  function registerIssue() {
+    addBotMessage('Your complaint has been registered and will be looked into within 24 hours.');
+    requestUserDetails();
+  }
+  
+  
+  
+  
+  
+  function hidePersonalDetailsInputFields() {
+    var nameInput = document.getElementById('name');
+    var phoneInput = document.getElementById('phone');
+    var emailInput = document.getElementById('email');
+    
+    if (nameInput) {
+        nameInput.classList.add('hidden');
+    }
+    if (phoneInput) {
+        phoneInput.classList.add('hidden');
+    }
+    if (emailInput) {
+        emailInput.classList.add('hidden');
+    }
+}
+
+function hideSubmitButton() {
+    var submitButton = document.getElementById('submitBtn');
+    if (submitButton) {
+        submitButton.classList.add('hidden');
+    }
+}
+  
+  
+
+  let userDetailsRequested = false;
+
+function requestUserDetails() {
+    if (!userDetailsRequested) {
+        addBotMessage('Please enter your details:');
+        addInputField('name', 'Name (9-50 characters including spaces)');
+        addInputField('phone', 'Phone Number (10 digits)');
+        addInputField('email', 'Email (ending with @gmail.com or @outlook.com)');
+        addSubmitButton();
+        userDetailsRequested = true;
+    }
+}
+
+function addSubmitButton() {
+    var submitButton = document.createElement('button');
+    submitButton.innerText = 'Submit';
+    submitButton.onclick = function() {
+        processInput();
+    };
+    document.getElementById('chat').appendChild(submitButton);
+}
+
+function processInput() {
+    var name = document.getElementById('name').value;
+    var phone = document.getElementById('phone').value;
+    var email = document.getElementById('email').value;
+    
+    // Check if all required fields are filled
+    if (name && phone && email) {
+        // Proceed to validate the details and register the complaint
+        if (validateDetails(name, phone, email)) {
+            registerIssue();
+            addBotMessage('Your problem has been registered.');
+            askForMoreHelp();
+        } else {
+            // If details are not valid, prompt the user to enter again
+            addBotMessage('Please enter valid details.');
+        }
+    } else {
+        // If any required field is empty, prompt the user to fill all fields
+        addBotMessage('Please fill in all details.');
+    }
+}
+
+function askForMoreHelp() {
+    addBotMessage('Thank you for using our service. Is there anything else I can assist you with?');
+    addButton('Yes', function() {
+        clearChat();
+        startChat();
+    });
+    addButton('No', stopChat);
+}
+
+
+
+
+function addSubmitButton() {
+    var submitButton = document.createElement('button');
+    submitButton.innerText = 'Submit';
+    submitButton.onclick = function() {
+        processInput();
+    };
+    document.getElementById('chat').appendChild(submitButton);
+}
+
+
+
+  function addInputField(id, placeholder) {
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.id = id;
+    input.placeholder = placeholder;
+    document.getElementById('chat').appendChild(input);
+  }
+
+
+
+
+  function validateDetails(name, phone, email) {
+    // Validate name (9-50 characters including spaces)
+    var nameRegex = /^[\w\s]{9,50}$/;
+    // Validate phone number (10 digits)
+    var phoneRegex = /^\d{10}$/;
+    // Validate email (ending with @gmail.com or @outlook.com)
+    var emailRegex = /^[^\s@]+@(gmail|outlook)\.com$/;
+
+    if (!nameRegex.test(name)) {
+        return false;
+    }
+    if (!phoneRegex.test(phone)) {
+        return false;
+    }
+    if (!emailRegex.test(email)) {
+        return false;
+    }
+
+    return true;
+}
+  
+  
+  
+  
+  
+  
+  
+  function processInput() {
+    var name = document.getElementById('name').value;
+    var phone = document.getElementById('phone').value;
+    var email = document.getElementById('email').value;
+    
+    // Check if all required fields are filled
+    if (name && phone && email) {
+        // Proceed to validate the details and register the complaint
+        if (validateDetails(name, phone, email)) {
+            // If details are valid, register the issue and store user data
+            registerIssue();
+            storeUserData(); // Call the function to store user data
+        } else {
+            // If details are not valid, prompt the user to enter again
+            addBotMessage('Please enter valid details.');
+            requestUserDetails(); // Optionally, you can ask for user details again
+        }
+    } else {
+        // If any required field is empty, prompt the user to fill all fields
+        addBotMessage('Please fill in all details.');
+    }
+}
+</script>
+</body>
+</html>
